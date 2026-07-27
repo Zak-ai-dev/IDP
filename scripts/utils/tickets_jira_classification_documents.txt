@@ -1,0 +1,134 @@
+TICKETS JIRA - SPRINT CLASSIFICATION DOCUMENTS (IDP)
+========================================================
+
+
+Ticket — Constitution et labellisation du dataset de test (6 classes)
+------------------------------------------------------------------------
+Description :
+Rassembler un échantillon représentatif de documents pour les 6 classes
+cibles (CNI ancien, CNI nouveau, CNI étrangère, avis d'impôt, facture,
+titre de séjour, passeport FR, passeport étranger), avec labels vérifiés.
+
+Critères d'acceptation :
+- Volume minimum par classe défini et atteint
+- Cas difficiles représentés (CNI étrangères multi-pays/langues, qualité
+  scan variable)
+- Split train/test propre, sans fuite
+- Labels stockés dans un format exploitable par le pipeline existant
+
+
+Ticket — Adaptation du pipeline TF-IDF + XGBoost aux 6 classes
+------------------------------------------------------------------------
+Description :
+Adapter le pipeline TF-IDF + XGBoost existant au nouveau jeu de 6 classes.
+
+Critères d'acceptation :
+- Pipeline exécutable de bout en bout sur le nouveau dataset
+- Paramètres TF-IDF documentés (vocabulaire max, min_df/max_df,
+  ngram_range)
+- Run tracké dans MLflow
+
+
+Ticket — Entraînement et évaluation baseline TF-IDF + XGBoost
+------------------------------------------------------------------------
+Description :
+Entraîner le modèle sur le train set et évaluer sur le test set des
+6 classes.
+
+Critères d'acceptation :
+- Matrice de confusion (6x6) produite
+- Précision/rappel/F1 par classe
+- Résultats loggés dans MLflow
+
+
+Ticket — Analyse des erreurs baseline et focus sous-classes PID
+------------------------------------------------------------------------
+Description :
+Analyser en détail les erreurs de classification, en particulier entre
+passeport FR/étranger et CNI ancien/nouveau format.
+
+Critères d'acceptation :
+- Liste des documents mal classés avec analyse qualitative
+- Identification des paires de classes les plus confondues
+- Recommandation écrite : go/no-go pour le stage 2 visuel
+
+
+Ticket — Rapport de synthèse baseline classification 6 classes
+------------------------------------------------------------------------
+Description :
+Consolider les résultats des tickets précédents dans un document de
+synthèse partageable.
+
+Critères d'acceptation :
+- Document résumant méthodo, métriques, limites
+- Décision actée sur la suite (go/no-go stage 2)
+
+
+Ticket — Regroupement en classe agrégée PID (stage 1) [CONDITIONNEL]
+------------------------------------------------------------------------
+Description :
+À engager uniquement si le ticket d'analyse d'erreurs conclut à un go
+pour le stage 2 visuel. Si la baseline 6 classes est suffisante, ce
+ticket est annulé.
+Si activé : adapter le pipeline TF-IDF + XGBoost pour classifier en
+classes agrégées : PID (CNI + passeport + titre de séjour) vs facture
+vs avis d'impôt.
+
+Critères d'acceptation :
+- Condition de déclenchement validée avant de commencer
+- Rappel élevé priorisé sur la classe PID
+- Comparaison des métriques avant/après regroupement
+- Documentation du mapping classes fines → classe agrégée
+
+
+Ticket — Constitution du dataset image pour classification PID fine [CONDITIONNEL]
+------------------------------------------------------------------------
+Description :
+À engager uniquement si go stage 2. Si la baseline est suffisante, ce
+ticket est annulé.
+Si activé : collecter et labelliser un jeu de données image pour les
+6 sous-classes PID.
+
+Critères d'acceptation :
+- Condition de déclenchement validée avant de commencer
+- Volume minimum par classe défini et atteint
+- Classes équilibrées, stratégie de rééquilibrage si besoin
+
+
+Ticket — Prétraitement des images (redressement/cadrage) [CONDITIONNEL]
+------------------------------------------------------------------------
+Description :
+Conditionnel au go stage 2 et à la constitution du dataset image.
+Mettre en place le prétraitement des documents (redressement, rognage,
+normalisation) avant classification image.
+
+Critères d'acceptation :
+- Pipeline de prétraitement documenté et reproductible
+- Vérification de la dépendance/réutilisation avec le pipeline IDP
+  existant
+
+
+Ticket — Entraînement classifieur ResNet sur sous-classes PID [CONDITIONNEL]
+------------------------------------------------------------------------
+Description :
+Conditionnel au go stage 2 et aux tickets précédents (dataset image,
+prétraitement). Fine-tuner un ResNet (18/34) pré-entraîné ImageNet pour
+classifier les 6 sous-classes PID à partir de l'image du document.
+
+Critères d'acceptation :
+- Pipeline d'entraînement avec tracking MLflow
+- Métriques par classe (precision/recall/F1)
+- Comparaison avec la baseline texte sur les mêmes sous-classes
+
+
+Ticket — Intégration pipeline coarse-to-fine (stage 1 + stage 2) [CONDITIONNEL]
+------------------------------------------------------------------------
+Description :
+Conditionnel au go stage 2 et à l'entraînement du ResNet. Chaîner le
+classifieur agrégé PID (texte) et le classifieur fin (image) en un
+pipeline unique de classification de documents.
+
+Critères d'acceptation :
+- Pipeline end-to-end fonctionnel sur un échantillon de test
+- Mesure de la propagation d'erreur stage 1 → stage 2
+- Documentation technique du pipeline
