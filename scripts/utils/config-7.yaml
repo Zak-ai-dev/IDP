@@ -1,0 +1,120 @@
+DATA:
+  # Root folder where downloaded altos are stored (one subfolder per label)
+  # and where the global metadata.pkl is written
+  data_path: "/mnt/data/classifier_eer/prod/data"
+
+  minio_client: "min-ap27426-prod-d80a6b43-0.data.cloud.xxx"
+
+  # Sampling parameters applied to each label
+  sampling:
+    n_train: 200
+    n_test: 100
+    seed: 42
+
+  # Default status of the documents to load (can be overridden per label)
+  default_target_status:
+    - "validated"
+
+  # ---------------------------------------------------------------------------
+  # Optional keys per label:
+  #
+  #   split_mode            : train/test assignment strategy.
+  #       "strict"     (default) -> the filename must start with "train" or "test",
+  #                     otherwise the document is discarded.
+  #       "test_only"  -> only the "test" prefix is discriminant, everything else
+  #                     falls back to "train".
+  #       "random"     -> the filename carries no train/test hint (exploration
+  #                     workspace 77, TRI_<TYPE>_XXXX.pdf convention): the split is
+  #                     drawn at random, with no overlap between train and test.
+  #
+  #   filename_regex        : keep only the filenames matching this regex. Required
+  #                     on a multi-label workspace to isolate a given document type.
+  #
+  #   index_pattern         : regex capturing the numeric index at the end of the
+  #                     filename. Default: '_(\d+)\.[^.]+$'
+  #
+  #   excluded_index_ranges : index ranges (inclusive) to discard, defined separately
+  #                     for "train" and "test" since both lots are numbered
+  #                     independently.
+  #
+  #   target_status         : override of the status to load for this label.
+  #   enabled               : false -> the label is skipped.
+  # ---------------------------------------------------------------------------
+  labels:
+    # -------------------------------------------------------------------------
+    # Dedicated workspaces (one label = one workspace)
+    # -------------------------------------------------------------------------
+    - label: "doc_avis_impot"
+      workspaceId: 187
+
+    - label: "doc_fiche_paie"
+      workspaceId: 189
+
+    - label: "doc_cni_old_format"
+      workspaceId: 75
+      split_mode: "test_only"
+      index_pattern: '_(\d+)\.[^.]+$'
+      excluded_index_ranges:
+        train:
+          - [500, 750]
+        test:
+          - [100, 180]
+
+    - label: "doc_cni_new_format"
+      workspaceId: 74
+      split_mode: "test_only"
+      index_pattern: '_(\d+)\.[^.]+$'
+      excluded_index_ranges:
+        train:
+          - [500, 750]
+        test:
+          - [100, 180]
+
+    - label: "doc_passeport"
+      workspaceId: 119
+
+    # -------------------------------------------------------------------------
+    # Exploration workspace 77 (multi-label, temporary)
+    #
+    # These document types have no dedicated workspace yet: they are loaded from
+    # the exploration workspace in the meantime. TRI_<TYPE>_XXXX.pdf convention,
+    # with no train/test prefix -> random split.
+    # The target label kept in the metadata remains the one declared here.
+    # -------------------------------------------------------------------------
+    - label: "doc_titre_sejour"
+      workspaceId: 77
+      target_status:
+        - "nonSupervised"
+      split_mode: "random"
+      filename_regex: '^TRI_TITRE_SEJOUR_\d+\.pdf$'
+
+    - label: "doc_passeport_etranger"
+      workspaceId: 77
+      target_status:
+        - "nonSupervised"
+      split_mode: "random"
+      filename_regex: '^TRI_PASSEPORT_ETRANGER_\d+\.pdf$'
+
+    - label: "doc_cni_etrangere"
+      workspaceId: 77
+      target_status:
+        - "nonSupervised"
+      split_mode: "random"
+      filename_regex: '^TRI_CNI_ETR_\d+\.pdf$'
+
+    - label: "doc_drs_template"
+      workspaceId: 77
+      target_status:
+        - "nonSupervised"
+      split_mode: "random"
+      filename_regex: '^TRI_DRS_PM_\d+\.pdf$'
+
+    # Invoices: scope not settled yet (FACTURE_ENERGIE / MOBILE / INTERNET),
+    # disabled until the target naming convention is confirmed.
+    - label: "doc_facture"
+      workspaceId: 77
+      enabled: false
+      target_status:
+        - "nonSupervised"
+      split_mode: "random"
+      filename_regex: '^TRI_FACTURE_(ENERGIE|MOBILE|INTERNET)_\d+\.pdf$'
